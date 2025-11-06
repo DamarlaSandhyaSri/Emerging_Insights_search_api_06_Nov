@@ -31,7 +31,7 @@ class OpenSearchSettings(BaseModel):
     # AWS region and local credentials
     os_region: str = Field(default="us-east-1", description="AWS region, e.g., us-east-1")
     profile_name: Optional[str] = Field(
-        default="Comm-Prop-Sandbox", 
+        # default="Comm-Prop-Sandbox", 
         description="AWS CLI profile name"
     )
     
@@ -53,10 +53,11 @@ def build_client(settings: OpenSearchSettings) -> OpenSearch:
     """
     
     # Create AWS credentials if profile is provided
-    if settings.profile_name:
-        session = boto3.Session(profile_name=settings.profile_name)
-    else:
-        session = boto3.Session()
+    session = boto3.Session()
+    # if settings.profile_name:
+    #     session = boto3.Session(profile_name=settings.profile_name)
+    # else:
+    #     session = boto3.Session()
     
     credentials = session.get_credentials().get_frozen_credentials()
     

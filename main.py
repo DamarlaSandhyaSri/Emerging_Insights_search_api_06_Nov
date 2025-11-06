@@ -13,7 +13,7 @@ app = FastAPI(title="Emerging Insights", lifespan=lifespan_factory(
     settings=OpenSearchSettings(
         os_endpoint="a3brd8mlqqwa2qa6ukm3.us-east-1.aoss.amazonaws.com",
         os_port=443,
-        profile_name="Comm-Prop-Sandbox",
+        # profile_name="Comm-Prop-Sandbox",
         os_region="us-east-1",
     )
 ))

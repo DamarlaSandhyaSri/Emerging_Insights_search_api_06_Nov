@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 REGION = "us-east-1"
-PROFILE = "Comm-Prop-Sandbox"
+# PROFILE = "Comm-Prop-Sandbox"
 TEST_BUCKET = "ei-proquest-bucket"
 TEST_PREFIX = "test/"
 NON_EXISTENT_BUCKET = "non-existent-bucket-xyz-123"

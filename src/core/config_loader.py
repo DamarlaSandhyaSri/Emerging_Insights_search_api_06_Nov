@@ -27,10 +27,12 @@ settings = load_settings()
 
 
 def get_aws_auth():
-    if os.getenv("DYNACONF_ENV", "local") == "local":
-        session = boto3.Session(profile_name="Comm-Prop-Sandbox")
-    else:
-        session = boto3.Session()
+    session = boto3.Session()
+    # if os.getenv("DYNACONF_ENV", "local") == "local":
+    #     # session = boto3.Session(profile_name="Comm-Prop-Sandbox")
+    #     session = boto3.Session()
+    # else:
+    #     session = boto3.Session()
     credentials = session.get_credentials()
     return AWSV4SignerAsyncAuth(credentials, settings.aws_config.region, settings.aws_config.service)
 

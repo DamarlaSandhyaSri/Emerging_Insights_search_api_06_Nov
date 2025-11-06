@@ -26,7 +26,8 @@ class CommonSession:
         self.region = config.region
         self.profile_name = config.profile_name
         self.client = None
-        self.session = (aioboto3.Session(profile_name=self.profile_name) if self.profile_name else aioboto3.Session())
+        # self.session = (aioboto3.Session(profile_name=self.profile_name) if self.profile_name else aioboto3.Session())
+        self.session = aioboto3.Session()
 
 
     async def __aenter__(self):

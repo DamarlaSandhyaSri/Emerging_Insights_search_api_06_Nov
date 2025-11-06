@@ -9,14 +9,15 @@ logger = get_logger(__name__)
 class BedrockConfig(BaseModel):
     ENDPOINT_URL : str = "https://bedrock-runtime.us-east-1.amazonaws.com"
     AWS_REGION: str = "us-east-1"
-    PROFILE_NAME: Optional[str] = "Comm-Prop-Sandbox"
+    # PROFILE_NAME: Optional[str] = "Comm-Prop-Sandbox"
 
 class BedrockClient:
     def __init__(self, config: BedrockConfig):
         self.config = config
         
         try:
-            session = boto3.Session(profile_name=config.PROFILE_NAME)
+            session = boto3.Session()
+            # session = boto3.Session(profile_name=config.PROFILE_NAME)
             credentials = session.get_credentials().get_frozen_credentials()
 
             self.client = boto3.client(
