@@ -30,10 +30,10 @@ class OpenSearchSettings(BaseModel):
     
     # AWS region and local credentials
     os_region: str = Field(default="us-east-1", description="AWS region, e.g., us-east-1")
-    profile_name: Optional[str] = Field(
-        # default="Comm-Prop-Sandbox", 
-        description="AWS CLI profile name"
-    )
+    # profile_name: Optional[str] = Field(
+    #     # default="Comm-Prop-Sandbox", 
+    #     description="AWS CLI profile name"
+    # )
     
     # Connection behavior
     verify_certs: bool = Field(default=True)
