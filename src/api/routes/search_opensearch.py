@@ -279,24 +279,24 @@ def get_unique_docs(search_results):
 
 # url = "https://techxplore.com/news/2025-10-robots-automatic-fabric-muscle-commercialization.html"
 
-url = "https://techxplore.com/news/2025-10-concentrationcontrolled-doping-ptype-polymer-semiconductor.html"
-search_query = {
-        "query": {
-            "term": {
-                "URL":  { "value":f"{url}"
-            }
-            }
-        }
-    }
+# url = "https://techxplore.com/news/2025-10-concentrationcontrolled-doping-ptype-polymer-semiconductor.html"
+# search_query = {
+#         "query": {
+#             "term": {
+#                 "URL":  { "value":f"{url}"
+#             }
+#             }
+#         }
+#     }
 
-search_query = {
-  "query": {
-    "match_all": {}
-  }
-}
+# search_query = {
+#   "query": {
+#     "match_all": {}
+#   }
+# }
 
-index_name = "ei_articles_index-05-nov-test"
-search_results = search_documents(index_name, search_query, size=10)
-print(search_results)
+# index_name = "ei_articles_index-05-nov-test"
+# search_results = search_documents(index_name, search_query, size=10)
+# print(search_results)
 
 
