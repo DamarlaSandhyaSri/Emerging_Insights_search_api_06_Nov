@@ -89,6 +89,7 @@ settings = OpenSearchSettings()
 client = build_client(settings)
 
 
+
 def search_documents( index_name: str, query: Dict[str, Any], 
                         size: Optional[int]) -> Dict[str, Any]:
         """

@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from CommonService.async_opensearch.config import OpenSearchSettings
 from CommonService.async_opensearch.service import dependency, lifespan_factory
-
 from src.api.routes.sample_route import sample_router
 from src.api.routes.search_docs_v1 import search_router
 from src.db.db_middleware import Opensearch_middleware

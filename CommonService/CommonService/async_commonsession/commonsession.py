@@ -4,8 +4,8 @@ from typing import Optional
 class CommonSessionConfig(BaseModel):
     client_name:str
     region: str
-    profile_name:Optional[str]
-
+    # profile_name:Optional[str]
+     
     @field_validator('client_name','region')
     def client_region_must_be_str(cls,v,field):
         if not isinstance(v,str):

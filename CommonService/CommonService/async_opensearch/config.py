@@ -4,7 +4,7 @@ class OpenSearchSettings(BaseModel):
     os_endpoint:str = Field(..., description="provide the opensearch endpoint")
     os_port:int = Field(default=443)
     service: Literal["es","aoss"]=Field(default="aoss",description="es for aws opensearch, aoss for serverless")
-    profile_name:Optional[str]
+    # profile_name:Optional[str] 
     os_region:str=Field(...,description="provide region")
     verify_certs:bool = Field(default=True)
     timeout:int=Field(default=30)
