@@ -8,9 +8,90 @@ from pydantic import BaseModel, Field
 from typing import Literal
 # from src.api.routes.logger import get_logger
 
-# logger = get_logger(__name__)
+# # logger = get_logger(__name__)
 
-# CONFIGURATION
+# # CONFIGURATION
+# class OpenSearchSettings(BaseModel):
+#     """
+#     Configuration settings for OpenSearch connection.
+#     Compatible with both AWS OpenSearch and OpenSearch Serverless (AOSS).
+#     """
+    
+#     # Basic connection
+#     os_endpoint: str = Field(
+#         # default="mab9oebjshix9m9njfg8.us-east-1.aoss.amazonaws.com",
+#         default="a3brd8mlqqwa2qa6ukm3.us-east-1.aoss.amazonaws.com",  
+#         description="OpenSearch endpoint or domain"
+#     )
+#     os_port: int = Field(default=443, description="Port for OpenSearch endpoint")
+    
+#     # AWS service type: es (OpenSearch Service) or aoss (Serverless)
+#     service: Literal["es", "aoss"] = Field(default="aoss")
+    
+#     # AWS region and local credentials
+#     os_region: str = Field(default="us-east-1", description="AWS region, e.g., us-east-1")
+#     # profile_name: Optional[str] = Field(
+#     #     # default="Comm-Prop-Sandbox", 
+#     #     description="AWS CLI profile name"
+#     # )
+    
+#     # Connection behavior
+#     verify_certs: bool = Field(default=True)
+#     timeout: int = Field(default=30)
+#     max_retries: int = Field(default=3)
+#     retry_on_timeout: bool = Field(default=True)
+#     http_compress: bool = Field(default=True)
+
+
+# # CLIENT BUILDER
+# def build_client(settings: OpenSearchSettings) -> OpenSearch:
+#     """
+#     Create a synchronous OpenSearch client.
+#     Works for both:
+#     - AWS OpenSearch Service (managed)
+#     - AWS OpenSearch Serverless (AOSS)
+#     """
+    
+#     # Create AWS credentials if profile is provided
+#     session = boto3.Session()
+#     # if settings.profile_name:
+#     #     session = boto3.Session(profile_name=settings.profile_name)
+#     # else:
+#     #     session = boto3.Session()
+    
+#     credentials = session.get_credentials().get_frozen_credentials()
+#     # credentials = session
+    
+#     # AWS SigV4 authentication
+#     awsauth = AWS4Auth(
+#         credentials.access_key,
+#         credentials.secret_key,
+#         settings.os_region,
+#         settings.service,
+#         session_token=credentials.token,
+#     )
+    
+#     client = OpenSearch(
+#         hosts=[{"host": settings.os_endpoint, "port": settings.os_port}],
+#         http_auth=awsauth,
+#         use_ssl=True,
+#         verify_certs=settings.verify_certs,
+#         http_compress=settings.http_compress,
+#         timeout=settings.timeout,
+#         connection_class=RequestsHttpConnection,
+#         max_retries=settings.max_retries,
+#         retry_on_timeout=settings.retry_on_timeout,
+#     )
+    
+#     return client
+
+
+import boto3
+from pydantic import BaseModel, Field
+from typing import Literal
+from opensearchpy import OpenSearch, RequestsHttpConnection
+
+
 class OpenSearchSettings(BaseModel):
     """
     Configuration settings for OpenSearch connection.
@@ -19,7 +100,6 @@ class OpenSearchSettings(BaseModel):
     
     # Basic connection
     os_endpoint: str = Field(
-        # default="mab9oebjshix9m9njfg8.us-east-1.aoss.amazonaws.com",
         default="a3brd8mlqqwa2qa6ukm3.us-east-1.aoss.amazonaws.com",  
         description="OpenSearch endpoint or domain"
     )
@@ -28,13 +108,9 @@ class OpenSearchSettings(BaseModel):
     # AWS service type: es (OpenSearch Service) or aoss (Serverless)
     service: Literal["es", "aoss"] = Field(default="aoss")
     
-    # AWS region and local credentials
+    # AWS region
     os_region: str = Field(default="us-east-1", description="AWS region, e.g., us-east-1")
-    # profile_name: Optional[str] = Field(
-    #     # default="Comm-Prop-Sandbox", 
-    #     description="AWS CLI profile name"
-    # )
-    
+
     # Connection behavior
     verify_certs: bool = Field(default=True)
     timeout: int = Field(default=30)
@@ -43,37 +119,25 @@ class OpenSearchSettings(BaseModel):
     http_compress: bool = Field(default=True)
 
 
-# CLIENT BUILDER
 def build_client(settings: OpenSearchSettings) -> OpenSearch:
     """
-    Create a synchronous OpenSearch client.
-    Works for both:
-    - AWS OpenSearch Service (managed)
-    - AWS OpenSearch Serverless (AOSS)
+    Create a synchronous OpenSearch client using boto3 session credentials.
+    Works on:
+    - EC2 with IAM role (auto-fetches credentials)
+    - Local machine with AWS CLI profile or environment credentials
     """
-    
-    # Create AWS credentials if profile is provided
+
+    # Create a boto3 session (auto-picks credentials from environment or EC2 role)
     session = boto3.Session()
-    # if settings.profile_name:
-    #     session = boto3.Session(profile_name=settings.profile_name)
-    # else:
-    #     session = boto3.Session()
-    
-    credentials = session.get_credentials().get_frozen_credentials()
-    # credentials = session
-    
-    # AWS SigV4 authentication
-    awsauth = AWS4Auth(
-        credentials.access_key,
-        credentials.secret_key,
-        settings.os_region,
-        settings.service,
-        session_token=credentials.token,
-    )
-    
+    credentials = session.get_credentials()
+    frozen = credentials.get_frozen_credentials() if credentials else None
+
+    if not frozen:
+        raise RuntimeError("No AWS credentials found for OpenSearch connection.")
+
+    # Create OpenSearch client (boto3 handles SigV4 internally)
     client = OpenSearch(
         hosts=[{"host": settings.os_endpoint, "port": settings.os_port}],
-        http_auth=awsauth,
         use_ssl=True,
         verify_certs=settings.verify_certs,
         http_compress=settings.http_compress,
@@ -81,9 +145,15 @@ def build_client(settings: OpenSearchSettings) -> OpenSearch:
         connection_class=RequestsHttpConnection,
         max_retries=settings.max_retries,
         retry_on_timeout=settings.retry_on_timeout,
+        http_auth=(
+            frozen.access_key,
+            frozen.secret_key,
+            frozen.token,
+        ),
     )
-    
+
     return client
+
 
 
 settings = OpenSearchSettings()
