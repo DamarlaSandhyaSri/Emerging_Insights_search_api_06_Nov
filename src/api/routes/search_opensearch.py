@@ -163,46 +163,80 @@ class OpenSearchSettings(BaseModel):
 
 from requests_aws4auth import AWS4Auth
 
+# def build_client(settings: OpenSearchSettings) -> OpenSearch:
+#     """
+#     Create a synchronous OpenSearch client using boto3 session credentials.
+#     Works on:
+#     - EC2 with IAM role (auto-fetches credentials)
+#     - Local machine with AWS CLI profile or environment credentials
+#     """
+
+#     # Create a boto3 session (auto-picks credentials from environment or EC2 role)
+#     session = boto3.Session(region_name=settings.os_region)
+#     credentials = session.get_credentials()
+#     frozen = credentials.get_frozen_credentials() if credentials else None
+
+#     if not frozen:
+#         raise RuntimeError("No AWS credentials found for OpenSearch connection.")
+
+#     # Create AWS4Auth for SigV4 signing
+#     awsauth = AWS4Auth(
+#         frozen.access_key,
+#         frozen.secret_key,
+#         settings.os_region,
+#         settings.service,
+#         session_token=frozen.token
+#     )
+
+#     # Create OpenSearch client
+#     client = OpenSearch(
+#         hosts=[{"host": settings.os_endpoint, "port": settings.os_port}],
+#         http_auth=awsauth,  # ✅ Use AWS4Auth, not tuple
+#         use_ssl=True,
+#         verify_certs=settings.verify_certs,
+#         http_compress=settings.http_compress,
+#         timeout=settings.timeout,
+#         connection_class=RequestsHttpConnection,
+#         max_retries=settings.max_retries,
+#         retry_on_timeout=settings.retry_on_timeout,
+#     )
+
+#     return client
+
+
+
+import boto3
+from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
+
 def build_client(settings: OpenSearchSettings) -> OpenSearch:
     """
-    Create a synchronous OpenSearch client using boto3 session credentials.
-    Works on:
-    - EC2 with IAM role (auto-fetches credentials)
-    - Local machine with AWS CLI profile or environment credentials
+    Create an OpenSearch client that supports AWS SigV4 authentication
+    (for both AOSS and AWS OpenSearch Service).
     """
 
     # Create a boto3 session (auto-picks credentials from environment or EC2 role)
-    session = boto3.Session(region_name=settings.os_region)
+    session = boto3.Session()
     credentials = session.get_credentials()
-    frozen = credentials.get_frozen_credentials() if credentials else None
-
-    if not frozen:
+    if not credentials:
         raise RuntimeError("No AWS credentials found for OpenSearch connection.")
 
-    # Create AWS4Auth for SigV4 signing
-    awsauth = AWS4Auth(
-        frozen.access_key,
-        frozen.secret_key,
-        settings.os_region,
-        settings.service,
-        session_token=frozen.token
-    )
+    # Create the AWS SigV4 Auth handler
+    auth = AWSV4SignerAuth(credentials, settings.os_region, settings.service)
 
-    # Create OpenSearch client
+    # Build OpenSearch client
     client = OpenSearch(
         hosts=[{"host": settings.os_endpoint, "port": settings.os_port}],
-        http_auth=awsauth,  # ✅ Use AWS4Auth, not tuple
+        http_auth=auth,  # ✅ use SigV4 auth instead of tuple
         use_ssl=True,
         verify_certs=settings.verify_certs,
-        http_compress=settings.http_compress,
-        timeout=settings.timeout,
         connection_class=RequestsHttpConnection,
+        timeout=settings.timeout,
         max_retries=settings.max_retries,
         retry_on_timeout=settings.retry_on_timeout,
+        http_compress=settings.http_compress,
     )
 
     return client
-
 
 
 def search_documents( index_name: str, query: Dict[str, Any], 
