@@ -1,0 +1,11 @@
+[opensearch]
+host = "${HOST}"
+auth = " "
+index1 = "${INDEX1}"
+port = 443
+bedrock_url = 'https://bedrock-runtime.us-east-1.amazonaws.com'
+
+[aws_config]
+service = "aoss"
+region = "us-east-1"
+

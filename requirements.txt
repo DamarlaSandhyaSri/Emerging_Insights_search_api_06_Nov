@@ -1,0 +1,12 @@
+boto3
+fastapi
+loguru==0.7.2
+opensearch-py==2.3.1
+pydantic
+pydantic-settings
+python-dateutil==2.8.2
+python-dotenv==1.0.0
+uvicorn==0.24.0.post1
+Jinja2==3.1.2
+pyyaml
+dynaconf

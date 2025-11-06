@@ -1,0 +1,76 @@
+# # Global settings
+settings:
+  default_strategy: "semantic"
+  max_results_per_search: 7 #for semantic and keyword search
+  bedrock:
+    embed_model_id: "amazon.titan-embed-text-v1"
+  rerank_config:
+    enable_rerank: true
+    top_n: 20
+    rerank_model_id: "cohere.rerank-v3-5:0"
+    anthropic_model_id: "anthropic.claude-3-sonnet-20240229-v1:0"
+    rerank_threshold: 0.2
+  otel:
+    embed_id: "embeddings-generation"
+    rerank_id: "rerank-invocation"
+
+
+# Query templates for different strategies
+query_templates:
+  multi:
+    - "index": "test_ei_index_7"
+    - _source: ["title_t","headline_t","content_service_t","content_t","article_statenames_t","product_link","Lob_sm","product_link","__smallupdateddate_tdt","article_authorsnames_s", "article_lobnames_t_en","shortdescription_t","content_t_summary"]
+      size: 20
+      query:
+        bool:
+          should:
+          - knn:
+              content_t_vector:
+                vector: "PH_API_EMBEDDINGS"
+                k: 20
+                boost: 1.0
+          - knn:
+              title_t_vector:
+                vector: "PH_API_EMBEDDINGS"
+                k: 20
+                boost: 2.5
+          - match_phrase:
+              content_t:
+                query: "PH_question" 
+                slop: 3
+                boost: 3.0       
+      sort:
+      - _score:
+          order: "desc"
+      - __smallupdateddate_tdt:
+          order: "desc"
+    # - index: "test_lmon_index_5"
+    # - _source: ["legal_name_t","legal_description_t","content_Service_sm","sff_jurisdiction_tag_t_en","lmon_lobnames_t_en","product_link", "__smallupdateddate_tdt"]
+    #   size: 10
+    #   query:
+    #     bool:
+    #       should:
+    #       - knn:
+    #           legal_description_t_vector:
+    #             vector: "PH_API_EMBEDDINGS"
+    #             k: 10
+      
+    #   sort:
+    #   - _score:
+    #       order: "desc"
+    #   - __smallupdateddate_tdt:
+    #       order: "desc"
+    # - index: "test_clm_index_1"
+    # - _source: ["clmTitle","topicDescription","jurisdiction","lob","document_file_path", "modifiedDate_dt","chunk_text","chunk_id"]
+    #   size: 20
+    #   query:
+    #     knn:
+    #       chunk_embedding:
+    #         vector: "PH_API_EMBEDDINGS"
+    #         k: 20
+    #   sort:
+    #   - _score:
+    #       order: "desc"
+    #   # - modifiedDate_dt.keyword:
+    #   #     order: "desc"
+
