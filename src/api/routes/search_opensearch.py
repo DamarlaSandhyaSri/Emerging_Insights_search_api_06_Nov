@@ -119,6 +119,50 @@ class OpenSearchSettings(BaseModel):
     http_compress: bool = Field(default=True)
 
 
+# def build_client(settings: OpenSearchSettings) -> OpenSearch:
+#     """
+#     Create a synchronous OpenSearch client using boto3 session credentials.
+#     Works on:
+#     - EC2 with IAM role (auto-fetches credentials)
+#     - Local machine with AWS CLI profile or environment credentials
+#     """
+
+#     # Create a boto3 session (auto-picks credentials from environment or EC2 role)
+#     session = boto3.Session(region_name=settings.os_region)
+#     credentials = session.get_credentials()
+#     frozen = credentials.get_frozen_credentials() if credentials else None
+
+#     if not frozen:
+#         raise RuntimeError("No AWS credentials found for OpenSearch connection.")
+
+#     # Create OpenSearch client (boto3 handles SigV4 internally)
+#     client = OpenSearch(
+#         hosts=[{"host": settings.os_endpoint, "port": settings.os_port}],
+#         use_ssl=True,
+#         verify_certs=settings.verify_certs,
+#         http_compress=settings.http_compress,
+#         timeout=settings.timeout,
+#         connection_class=RequestsHttpConnection,
+#         max_retries=settings.max_retries,
+#         retry_on_timeout=settings.retry_on_timeout,
+#         http_auth=(
+#             frozen.access_key,
+#             frozen.secret_key,
+#             frozen.token,
+#         ),
+#     )
+
+#     return client
+
+
+
+# settings = OpenSearchSettings()
+# client = build_client(settings)
+
+
+
+from requests_aws4auth import AWS4Auth
+
 def build_client(settings: OpenSearchSettings) -> OpenSearch:
     """
     Create a synchronous OpenSearch client using boto3 session credentials.
@@ -128,16 +172,26 @@ def build_client(settings: OpenSearchSettings) -> OpenSearch:
     """
 
     # Create a boto3 session (auto-picks credentials from environment or EC2 role)
-    session = boto3.Session()
+    session = boto3.Session(region_name=settings.os_region)
     credentials = session.get_credentials()
     frozen = credentials.get_frozen_credentials() if credentials else None
 
     if not frozen:
         raise RuntimeError("No AWS credentials found for OpenSearch connection.")
 
-    # Create OpenSearch client (boto3 handles SigV4 internally)
+    # Create AWS4Auth for SigV4 signing
+    awsauth = AWS4Auth(
+        frozen.access_key,
+        frozen.secret_key,
+        settings.os_region,
+        settings.service,
+        session_token=frozen.token
+    )
+
+    # Create OpenSearch client
     client = OpenSearch(
         hosts=[{"host": settings.os_endpoint, "port": settings.os_port}],
+        http_auth=awsauth,  # ✅ Use AWS4Auth, not tuple
         use_ssl=True,
         verify_certs=settings.verify_certs,
         http_compress=settings.http_compress,
@@ -145,19 +199,9 @@ def build_client(settings: OpenSearchSettings) -> OpenSearch:
         connection_class=RequestsHttpConnection,
         max_retries=settings.max_retries,
         retry_on_timeout=settings.retry_on_timeout,
-        http_auth=(
-            frozen.access_key,
-            frozen.secret_key,
-            frozen.token,
-        ),
     )
 
     return client
-
-
-
-settings = OpenSearchSettings()
-client = build_client(settings)
 
 
 
@@ -189,6 +233,43 @@ def search_documents( index_name: str, query: Dict[str, Any],
         except Exception as e:
             print(f"✗ Error searching documents: {str(e)}")
             return {"error": str(e)}
+
+
+def get_unique_docs(search_results):
+    """Remove duplicate docs based on 'doc_id' but retain full search result structure."""
+    if not search_results or "hits" not in search_results:
+        return search_results  # return as-is if invalid
+
+    hits_data = search_results.get("hits", {})
+    all_hits = hits_data.get("hits", [])
+
+    seen_doc_ids = set()
+    unique_hits = []
+
+    for hit in all_hits:
+        doc_id = hit.get("_source", {}).get("doc_id")
+        if doc_id and doc_id not in seen_doc_ids:
+            seen_doc_ids.add(doc_id)
+            unique_hits.append(hit)
+
+    print(f"Unique docs count: {len(unique_hits)}")
+
+    # ✅ Rebuild the full structure
+    return {
+        "took": search_results.get("took", 0),
+        "timed_out": search_results.get("timed_out", False),
+        "_shards": search_results.get("_shards", {}),
+        "hits": {
+            "total": {
+                "value": len(unique_hits),
+                "relation": "eq"
+            },
+            "max_score": hits_data.get("max_score"),
+            "hits": unique_hits
+        }
+    }
+
+
 
 
 # def execute_opensearch_query(self, query_body: dict):
@@ -241,41 +322,6 @@ def search_documents( index_name: str, query: Dict[str, Any],
 #     search_results["hits"]["hits"] = unique_hits
 #     print(f"Unique docs count: {len(unique_hits)}")
 #     return unique_hits
-
-
-def get_unique_docs(search_results):
-    """Remove duplicate docs based on 'doc_id' but retain full search result structure."""
-    if not search_results or "hits" not in search_results:
-        return search_results  # return as-is if invalid
-
-    hits_data = search_results.get("hits", {})
-    all_hits = hits_data.get("hits", [])
-
-    seen_doc_ids = set()
-    unique_hits = []
-
-    for hit in all_hits:
-        doc_id = hit.get("_source", {}).get("doc_id")
-        if doc_id and doc_id not in seen_doc_ids:
-            seen_doc_ids.add(doc_id)
-            unique_hits.append(hit)
-
-    print(f"Unique docs count: {len(unique_hits)}")
-
-    # ✅ Rebuild the full structure
-    return {
-        "took": search_results.get("took", 0),
-        "timed_out": search_results.get("timed_out", False),
-        "_shards": search_results.get("_shards", {}),
-        "hits": {
-            "total": {
-                "value": len(unique_hits),
-                "relation": "eq"
-            },
-            "max_score": hits_data.get("max_score"),
-            "hits": unique_hits
-        }
-    }
 
 
 
