@@ -19,7 +19,7 @@ class BedrockClient:
             session = boto3.Session()
             # session = boto3.Session(profile_name=config.PROFILE_NAME)
             # credentials = session.get_credentials().get_frozen_credentials()
-            credentials = session.get_credentials()
+            # credentials = session.get_credentials()
 
             self.client = boto3.client(
                 "bedrock-runtime",
