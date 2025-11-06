@@ -53,7 +53,7 @@ def build_client(settings: OpenSearchSettings) -> OpenSearch:
     """
     
     # Create AWS credentials if profile is provided
-    session = boto3.Session()
+    session = boto3.Session().get_credentials()
     # if settings.profile_name:
     #     session = boto3.Session(profile_name=settings.profile_name)
     # else:
@@ -64,11 +64,11 @@ def build_client(settings: OpenSearchSettings) -> OpenSearch:
     
     # AWS SigV4 authentication
     awsauth = AWS4Auth(
-        # credentials.access_key,
-        # credentials.secret_key,
+        credentials.access_key,
+        credentials.secret_key,
         settings.os_region,
         settings.service,
-        # session_token=credentials.token,
+        session_token=credentials.token,
     )
     
     client = OpenSearch(

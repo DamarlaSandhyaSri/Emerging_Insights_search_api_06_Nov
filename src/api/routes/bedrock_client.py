@@ -19,15 +19,15 @@ class BedrockClient:
             session = boto3.Session()
             # session = boto3.Session(profile_name=config.PROFILE_NAME)
             # credentials = session.get_credentials().get_frozen_credentials()
-            credentials = session
+            credentials = session.get_credentials()
 
             self.client = boto3.client(
                 "bedrock-runtime",
                 region_name=config.AWS_REGION,
                 endpoint_url=config.ENDPOINT_URL,
-                # aws_access_key_id=credentials.access_key,
-                # aws_secret_access_key=credentials.secret_key,
-                # aws_session_token=credentials.token,
+                aws_access_key_id=credentials.access_key,
+                aws_secret_access_key=credentials.secret_key,
+                aws_session_token=credentials.token,
             )
             logger.info("Bedrock client initialized successfully")
         except Exception as e:
