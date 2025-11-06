@@ -174,7 +174,10 @@ def search_documents( index_name: str, query: Dict[str, Any],
         Returns:
             Search results
         """
+        settings = OpenSearchSettings()
+        client = build_client(settings)
         try:
+            print("DEBUG TYPE of client.search:", type(client.search))
             response = client.search(
                 index=index_name,
                 body=query,
