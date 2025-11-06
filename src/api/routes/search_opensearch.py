@@ -64,11 +64,11 @@ def build_client(settings: OpenSearchSettings) -> OpenSearch:
     
     # AWS SigV4 authentication
     awsauth = AWS4Auth(
-        credentials.access_key,
-        credentials.secret_key,
+        # credentials.access_key,
+        # credentials.secret_key,
         settings.os_region,
         settings.service,
-        session_token=credentials.token,
+        # session_token=credentials.token,
     )
     
     client = OpenSearch(
