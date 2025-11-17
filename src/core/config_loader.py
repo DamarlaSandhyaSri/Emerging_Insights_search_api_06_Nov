@@ -14,7 +14,7 @@ logger = logger_instance.get_logger()
 
 def load_settings():
     # env = os.getenv("DYNACONF_ENV", "From Octopus")
-    env = "local"
+    env = ""
     settings_file = "local.toml" if env == "local" else "config/settings.toml"
     logger_instance.logg_message(
         f"The configuration '{env}' has been loaded for this enviroment",
