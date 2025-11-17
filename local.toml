@@ -1,0 +1,15 @@
+[opensearch]
+host = "tv9xe9sa7lpqtaqr5o9k.us-east-1.aoss.amazonaws.com"
+auth = " "
+index1 = "ei_articles_index"
+port = 443
+bedrock_url = 'https://bedrock-runtime.us-east-1.amazonaws.com'
+
+[aws_config]
+service = "aoss"
+region = "us-east-1"
+
+[enviro]
+env = 'Comm-Prop-Sandbox'
+
+
