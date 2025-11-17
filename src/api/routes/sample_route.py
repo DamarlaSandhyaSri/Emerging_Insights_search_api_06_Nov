@@ -69,7 +69,7 @@ async def get_indexes(request: Request, client: AsyncOpenSearch = Depends(depend
                 }
             }
         }
-        response = await client.search(body=search_query, index="ei_articles_index-05-nov-test")
+        response = await client.search(body=search_query, index="ei_articles_index")
         hits = response.get("hits", {}).get("hits", [])
         chunks = [hit["_source"]["Data"] for hit in hits if "_source" in hit and "Data" in hit["_source"]]
 
